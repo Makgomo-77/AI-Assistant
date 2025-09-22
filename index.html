@@ -1,1 +1,405 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant with Tool Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold text-center text-blue-600 mb-2">AI Assistant</h1>
+        <p class="text-center text-gray-600 mb-8">I can help you with calendar, maps, and email tasks</p>
+        
+        <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <!-- Chat Header with Tool Selection -->
+            <div class="bg-blue-500 px-4 py-3 flex justify-between items-center">
+                <div class="text-white font-semibold">Conversation</div>
+                <div class="flex space-x-2">
+                    <button class="tool-btn bg-blue-700 text-white px-3 py-1 rounded-lg text-sm" data-tool="calendar">
+                        <i class="far fa-calendar-alt mr-1"></i> Calendar
+                    </button>
+                    <button class="tool-btn bg-blue-700 text-white px-3 py-1 rounded-lg text-sm" data-tool="maps">
+                        <i class="fas fa-map-marker-alt mr-1"></i> Maps
+                    </button>
+                    <button class="tool-btn bg-blue-700 text-white px-3 py-1 rounded-lg text-sm" data-tool="email">
+                        <i class="far fa-envelope mr-1"></i> Email
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Chat Messages Container -->
+            <div class="h-96 overflow-y-auto p-4 bg-gray-50" id="chat-messages">
+                <div class="message ai-message flex mb-4">
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-blue-500"></i>
+                    </div>
+                    <div class="bg-blue-100 rounded-xl py-2 px-4 max-w-[80%]">
+                        <p class="text-gray-800">Hello! I'm your AI assistant. How can I help you today? I can assist with calendar, maps, and email tasks.</p>
+                        <span class="text-xs text-gray-500 block mt-1">Just now</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="border-t border-gray-200 p-4 bg-white">
+                <div class="flex">
+                    <input type="text" id="user-input" placeholder="Type your message here..." 
+                           class="flex-1 border border-gray-300 rounded-l-lg py-2 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="send-btn" class="bg-blue-500 text-white px-4 py-2 rounded-r-lg hover:bg-blue-600 transition duration-200">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="mt-2 flex space-x-2 overflow-x-auto py-2">
+                    <button class="suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm whitespace-nowrap">Schedule a meeting</button>
+                    <button class="suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm whitespace-nowrap">Find directions</button>
+                    <button class="suggestion-btn bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-sm whitespace-nowrap">Send an email</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tool Modals -->
+        <div id="calendar-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Schedule Event</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">Event Title</label>
+                        <input type="text" id="event-title" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Date & Time</label>
+                        <input type="datetime-local" id="event-time" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-6">
+                        <button class="modal-cancel px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+                        <button id="schedule-event" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Schedule</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="maps-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Get Directions</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">From</label>
+                        <input type="text" id="directions-from" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Current location">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">To</label>
+                        <input type="text" id="directions-to" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Destination">
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-6">
+                        <button class="modal-cancel px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+                        <button id="get-directions" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Get Directions</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="email-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-4">Send Email</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-gray-700 mb-1">To</label>
+                        <input type="email" id="email-to" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Subject</label>
+                        <input type="text" id="email-subject" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-gray-700 mb-1">Message</label>
+                        <textarea id="email-body" rows="4" class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-6">
+                        <button class="modal-cancel px-4 py-2 text-gray-600 rounded-lg hover:bg-gray-100">Cancel</button>
+                        <button id="send-email" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const toolButtons = document.querySelectorAll('.tool-btn');
+        const suggestionButtons = document.querySelectorAll('.suggestion-btn');
+        const modals = document.querySelectorAll('[id$="-modal"]');
+        const modalCancelButtons = document.querySelectorAll('.modal-cancel');
+        
+        // Tool APIs (simulated)
+        const api = {
+            calendar: {
+                scheduleEvent: (title, datetime) => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve({
+                                success: true,
+                                message: `Event "${title}" scheduled for ${new Date(datetime).toLocaleString()}`,
+                                event: { title, datetime }
+                            });
+                        }, 1000);
+                    });
+                }
+            },
+            maps: {
+                getDirections: (from, to) => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve({
+                                success: true,
+                                message: `Directions from ${from || 'your location'} to ${to}`,
+                                steps: [
+                                    'Head northeast on Main St',
+                                    'Turn right onto Oak Ave',
+                                    'Continue for 2 miles',
+                                    'Destination will be on your left'
+                                ],
+                                duration: '15 minutes',
+                                distance: '2.3 miles'
+                            });
+                        }, 1500);
+                    });
+                }
+            },
+            email: {
+                sendEmail: (to, subject, body) => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            resolve({
+                                success: true,
+                                message: `Email sent to ${to} with subject "${subject}"`
+                            });
+                        }, 1000);
+                    });
+                }
+            }
+        };
+        
+        // Add message to chat
+        function addMessage(text, isUser = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'} flex mb-4 ${isUser ? 'justify-end' : ''}`;
+            
+            messageDiv.innerHTML = `
+                ${!isUser ? `
+                    <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-blue-500"></i>
+                    </div>
+                ` : ''}
+                
+                <div class="${isUser ? 'bg-blue-500 text-white' : 'bg-blue-100'} rounded-xl py-2 px-4 max-w-[80%]">
+                    <p>${text}</p>
+                    <span class="text-xs ${isUser ? 'text-blue-200' : 'text-gray-500'} block mt-1">Just now</span>
+                </div>
+                
+                ${isUser ? `
+                    <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center ml-3">
+                        <i class="fas fa-user text-white"></i>
+                    </div>
+                ` : ''}
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Show typing indicator
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'message ai-message flex mb-4';
+            
+            typingDiv.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center mr-3">
+                    <i class="fas fa-robot text-blue-500"></i>
+                </div>
+                <div class="bg-blue-100 rounded-xl py-2 px-4">
+                    <div class="flex space-x-2">
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                        <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            return typingDiv;
+        }
+        
+        // Process user input
+        async function processUserInput() {
+            const text = userInput.value.trim();
+            if (!text) return;
+            
+            userInput.value = '';
+            addMessage(text, true);
+            
+            // Show typing indicator
+            const typingIndicator = showTypingIndicator();
+            
+            // Simple intent detection
+            let intent = 'general';
+            let tool = null;
+            
+            if (text.toLowerCase().includes('calendar') || text.toLowerCase().includes('schedule') || text.toLowerCase().includes('meeting')) {
+                intent = 'calendar';
+                tool = 'calendar';
+            } else if (text.toLowerCase().includes('map') || text.toLowerCase().includes('direction') || text.toLowerCase().includes('location')) {
+                intent = 'maps';
+                tool = 'maps';
+            } else if (text.toLowerCase().includes('email') || text.toLowerCase().includes('send') || text.toLowerCase().includes('mail')) {
+                intent = 'email';
+                tool = 'email';
+            }
+            
+            // Simulate processing time
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Remove typing indicator
+            typingIndicator.remove();
+            
+            // Generate response based on intent
+            switch(intent) {
+                case 'calendar':
+                    addMessage("I can help you schedule an event. What would you like to schedule?");
+                    setTimeout(() => document.querySelector('[data-tool="calendar"]').click(), 500);
+                    break;
+                case 'maps':
+                    addMessage("I can help you with directions. Where would you like to go?");
+                    setTimeout(() => document.querySelector('[data-tool="maps"]').click(), 500);
+                    break;
+                case 'email':
+                    addMessage("I can help you send an email. What would you like to send?");
+                    setTimeout(() => document.querySelector('[data-tool="email"]').click(), 500);
+                    break;
+                default:
+                    addMessage("I'm not sure what you're asking. I can help with calendar, maps, and email tasks. Which one do you need assistance with?");
+            }
+        }
+        
+        // Event Listeners
+        sendBtn.addEventListener('click', processUserInput);
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') processUserInput();
+        });
+        
+        // Tool buttons
+        toolButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tool = button.getAttribute('data-tool');
+                document.getElementById(`${tool}-modal`).classList.remove('hidden');
+            });
+        });
+        
+        // Suggestion buttons
+        suggestionButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                userInput.value = button.textContent;
+                processUserInput();
+            });
+        });
+        
+        // Modal cancel buttons
+        modalCancelButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                modals.forEach(modal => modal.classList.add('hidden'));
+            });
+        });
+        
+        // Calendar functionality
+        document.getElementById('schedule-event').addEventListener('click', async () => {
+            const title = document.getElementById('event-title').value;
+            const datetime = document.getElementById('event-time').value;
+            
+            if (!title || !datetime) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            addMessage(`Scheduling event: ${title} at ${new Date(datetime).toLocaleString()}...`, true);
+            
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                const result = await api.calendar.scheduleEvent(title, datetime);
+                typingIndicator.remove();
+                addMessage(result.message);
+                document.getElementById('calendar-modal').classList.add('hidden');
+            } catch (error) {
+                typingIndicator.remove();
+                addMessage("Sorry, I couldn't schedule that event. Please try again.");
+            }
+        });
+        
+        // Maps functionality
+        document.getElementById('get-directions').addEventListener('click', async () => {
+            const from = document.getElementById('directions-from').value;
+            const to = document.getElementById('directions-to').value;
+            
+            if (!to) {
+                alert('Please enter a destination');
+                return;
+            }
+            
+            addMessage(`Getting directions to ${to}...`, true);
+            
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                const result = await api.maps.getDirections(from, to);
+                typingIndicator.remove();
+                
+                let directionsText = `Here are your directions to ${to}:<br>`;
+                result.steps.forEach((step, index) => {
+                    directionsText += `${index + 1}. ${step}<br>`;
+                });
+                directionsText += `<br>Total distance: ${result.distance}, estimated time: ${result.duration}`;
+                
+                addMessage(directionsText);
+                document.getElementById('maps-modal').classList.add('hidden');
+            } catch (error) {
+                typingIndicator.remove();
+                addMessage("Sorry, I couldn't get directions. Please try again.");
+            }
+        });
+        
+        // Email functionality
+        document.getElementById('send-email').addEventListener('click', async () => {
+            const to = document.getElementById('email-to').value;
+            const subject = document.getElementById('email-subject').value;
+            const body = document.getElementById('email-body').value;
+            
+            if (!to || !subject || !body) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            addMessage(`Sending email to ${to}...`, true);
+            
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                const result = await api.email.sendEmail(to, subject, body);
+                typingIndicator.remove();
+                addMessage(result.message);
+                document.getElementById('email-modal').classList.add('hidden');
+            } catch (error) {
+                typingIndicator.remove();
+                addMessage("Sorry, I couldn't send that email. Please try again.");
+            }
+        });
+    </script>
+</body>
+</html>
